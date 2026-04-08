@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Struk PLN</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 1.0;
+            margin: 0;
+            padding: 10px;
+            background-color: #fff;
+        }
+       .input-area {
+            margin-bottom: 20px;
+        }
+        input {
+            padding: 8px;
+            width: 800px;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #2b6dd8;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 5px;
+        }
+        /* UKURAN 1/3 A4 */
+       .struk {
+            width: 210mm;
+            height: 99mm;
+            max-width: 210mm;
+            border: none;
+            padding: 10mm;
+            box-sizing: border-box;
+            display: none;
+            page-break-after: always;
+        }
+       .row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0px;
+        }
+        
+       .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0px 20px;
+            width: 100%;
+        }
+       .item {
+            display: flex;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+        }
+       .label {
+            display: inline-block;
+            width: 120px;
+            text-align: left;
+        }
+       .separator {
+            margin: 0 3px;
+        }
+       .value {
+            text-align: left;
+        }
+       .token {
+        
+            text-align: left;
+            font-size: 20px;
+            font-weight: bold;
+            margin: 20px 0;
+            letter-spacing: 0px;
+        }
+       .footer {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+        /* Pengaturan saat dicetak */
+        @media print {
+            @page {
+                size: 210mm 99mm;
+                margin: 0;
+            }
+           .input-area {
+                display: none!important;
+            }
+           .struk {
+                display: block!important;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 10mm;
+                box-sizing: border-box;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="input-area">
+        <input type="text" id="dataInput" placeholder="Contoh: TGGL-KODE(NOMINAL)-IDPEL-TOKEN/NAMA/TARIF/DAYA/Kwh">
+        <br>
+       
+        <button onclick="generateStruk()"> Struk</button>
+        <button onclick="window.print()">Cetak Struk</button>
+    </div>
+
+    <div class="struk" id="struk">
+        <div class="row">
+            <span>TGGL BELI : <span id="tglBeli"></span></span>
+        </div>
+
+        <div class="row">
+            <span>STRUK PEMBELIAN LISTRIK PRABAYAR</span>
+        </div>
+
+        <br>
+
+        
+        <div class="grid-container">
+        
+            <div class="item">
+                <span class="label">NO/ID PEL</span>
+                <span class="separator">:</span>
+                <span class="value" id="noMeter"></span>
+            </div>
+            <div class="item">
+                <span class="label">ADMIN BANK</span>
+                <span class="separator">:</span>
+                <span class="value">RP.0,00</span>
+            </div>
+
+            <div class="item">
+                <span class="label">NAMA</span>
+                <span class="separator">:</span>
+                <span class="value" id="nama"></span>
+            </div>
+            <div class="item">
+                <span class="label">METERAI</span>
+                <span class="separator">:</span>
+                <span class="value">RP.0,00</span>
+            </div>
+
+            <div class="item">
+                <span class="label">TARIF/DAYA</span>
+                <span class="separator">:</span>
+                <span class="value" id="tarifDaya"></span>
+            </div>
+            <div class="item">
+                <span class="label">PPN</span>
+                <span class="separator">:</span>
+                <span class="value" id="valPpn">RP.0,00</span>
+            </div>
+
+            <div class="item">
+                <span class="label">JUMLAH KWH</span>
+                <span class="separator">:</span>
+                <span class="value" id="jumlahKwh"></span>
+            </div>
+            <div class="item">
+                <span class="label">PPJ</span>
+                <span class="separator">:</span>
+                <span class="value" id="valPpj">RP.0,00</span>
+            </div>
+
+            <div class="item">
+                <span class="label">RP BAYAR</span>
+                <span class="separator">:</span>
+                <span class="value" id="valRpBayar"></span>
+            </div>
+            <div class="item">
+                <span class="label">ANGSURAN</span>
+                <span class="separator">:</span>
+                <span class="value" id="valAngsuran">RP.0,00</span>
+            </div>
+        </div>
+
+        <div class="token" id="token"></div>
+
+        <div class="footer">
+            Informasi Hubungi Call Center 123<br>
+            Atau<br>
+            hubungi PLN Terdekat:123
+
+
+            <br></br>
+            <br></br>
+            <br></br>
+            <br></br>
+            <br></br>
+            <br></br>
+
+            #JAWAJAWAJAWA
+        </div>
+    </div>
+
+    <script>
+     
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        function extractAndCalculate(str) {
+            if(!str) return 0;
+            let angka = str.replace(/[^0-9]/g, ''); // ambil hanya angka
+            if(angka) {
+                let nilai = parseInt(angka) * 1000; // <-- KALI 1000
+                return nilai;
+            }
+            return 0;
+        }
+
+        function generateStruk() {
+            const input = document.getElementById('dataInput').value.trim();
+            const cleanInput = input.replace(/\s+/g, ' ');
+            const parts = cleanInput.split(' ');
+
+            if (parts.length < 5) {
+                alert("Format input salah!\nContoh: 28/03/26 07:44:27 ZPPM1000 32190249642 3951-6284-6973-6451-8006/NAMA/R1/900VA/160,5Kwh");
+                return;
+            }
+
+            // Urutan: Tanggal, Jam, ZPPM, No Meter, DataLain...
+            const tglBeli = parts[0] + ' ' + parts[1];
+            const zppm = parts[2];
+            const noMeter = parts[3];
+            const sisaData = parts.slice(4).join(' ');
+            const dataDetail = sisaData.split('/');
+
+            if (dataDetail.length < 5) {
+                alert("Format detail salah!\nPastikan ada: Token/Nama/Tarif/Daya/Kwh");
+                return;
+            }
+
+            const token = dataDetail[0];
+            const nama = dataDetail[1];
+            const tarif = dataDetail[2];
+            const daya = dataDetail[3];
+            const kwhLengkap = dataDetail[4];
+
+            // Masukkan data ke struk
+            document.getElementById('tglBeli').textContent = tglBeli;
+            document.getElementById('noMeter').textContent = noMeter;
+            document.getElementById('nama').textContent = nama;
+            document.getElementById('tarifDaya').textContent = `${tarif}/${daya}`;
+            document.getElementById('jumlahKwh').textContent = kwhLengkap;
+            document.getElementById('token').textContent = `STROOM/TOKEN : ${token}`;
+
+            // NILAI ZPPM HANYA MASUK KE RP BAYAR SAJA
+            const nominal = extractAndCalculate(zppm);
+            const nominalFormat = formatNumber(nominal);
+            document.getElementById('valRpBayar').textContent = `RP.${nominalFormat},00`;
+
+            document.getElementById('struk').style.display = 'block';
+        }
+    </script>
+
+</body>
+</html>
